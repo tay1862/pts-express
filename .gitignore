@@ -1,0 +1,40 @@
+# Secrets and local env
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+
+# Node
+node_modules/
+npm-debug.log*
+coverage/
+dist/
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+android/local.properties
+apps/mobile/android/local.properties
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.iml
+.agents/
+skills-lock.json
+
+# Runtime data
+backups/
+logs/
+caddy_data/
+caddy_config/
+postgres_data/
