@@ -230,6 +230,7 @@ class ParcelEvidenceImage extends StatelessWidget {
       child: Image.network(
         photo.url,
         fit: BoxFit.cover,
+        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
         loadingBuilder: (context, child, progress) {
           if (progress == null) {
             return child;
@@ -314,6 +315,7 @@ class ParcelEvidencePreview extends StatelessWidget {
                 child: Image.network(
                   photo.url,
                   fit: BoxFit.contain,
+                  webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                   errorBuilder: (context, error, stackTrace) => Padding(
                     padding: const EdgeInsets.all(24),
                     child: SelectableText(photo.url),
