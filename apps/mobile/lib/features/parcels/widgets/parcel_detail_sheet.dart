@@ -228,9 +228,8 @@ class ParcelEvidenceImage extends StatelessWidget {
     return ColoredBox(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Image.network(
-        photo.url,
+        photo.displayUrl,
         fit: BoxFit.cover,
-        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
         loadingBuilder: (context, child, progress) {
           if (progress == null) {
             return child;
@@ -313,9 +312,8 @@ class ParcelEvidencePreview extends StatelessWidget {
                 minScale: 0.8,
                 maxScale: 4,
                 child: Image.network(
-                  photo.url,
+                  photo.displayUrl,
                   fit: BoxFit.contain,
-                  webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                   errorBuilder: (context, error, stackTrace) => Padding(
                     padding: const EdgeInsets.all(24),
                     child: SelectableText(photo.url),

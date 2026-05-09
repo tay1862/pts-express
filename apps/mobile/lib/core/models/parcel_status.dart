@@ -10,7 +10,7 @@ enum ParcelStatus {
   String label(String languageCode) {
     final lao = languageCode == 'lo';
     return switch (this) {
-      ParcelStatus.receivedInThailand => lao ? 'ຮັບແລ້ວທີ່ໄທ' : 'รับที่ไทยแล้ว',
+      ParcelStatus.receivedInThailand => lao ? 'ຮັບແລ້ວຢູ່ໄທ' : 'รับที่ไทยแล้ว',
       ParcelStatus.arrivedInLaos => lao ? 'ຮອດລາວແລ້ວ' : 'ถึงลาวแล้ว',
       ParcelStatus.pickedUp => lao ? 'ສົ່ງມອບແລ້ວ' : 'ส่งมอบแล้ว',
     };

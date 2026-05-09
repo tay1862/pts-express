@@ -187,9 +187,6 @@ class EvidenceCameraSheetState extends State<EvidenceCameraSheet>
           bytes: watermarked,
           capturedAt: capturedAt,
           note: statusForMode(widget.mode).label(widget.languageCode),
-          latitude: position?.latitude,
-          longitude: position?.longitude,
-          accuracyMeters: position?.accuracy,
           addressText: addressText,
         ),
       );
@@ -212,18 +209,12 @@ class EvidenceCameraSheetState extends State<EvidenceCameraSheet>
 
   List<String> watermarkLines(DateTime capturedAt) {
     final formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
-    final coords = position == null
-        ? 'ບໍ່ມີພິກັດ'
-        : '${position!.latitude.toStringAsFixed(6)}, ${position!.longitude.toStringAsFixed(6)}';
     return [
       'PTS Express',
       'ສະຖານະ: ${statusForMode(widget.mode).label('lo')}',
       if (widget.trackingCode.trim().isNotEmpty)
         'ເລກພັດສະດຸ: ${widget.trackingCode.trim()}',
       'ເວລາ: ${formatter.format(capturedAt)}',
-      'ພິກັດ: $coords',
-      if (position != null)
-        'ຄວາມແມ່ນຍຳ: ±${position!.accuracy.toStringAsFixed(0)} m',
       if (addressText?.isNotEmpty == true) 'ທີ່ຢູ່: $addressText',
     ];
   }
@@ -324,11 +315,24 @@ class EvidenceWatermarker {
       textDirection: ui.TextDirection.ltr,
       maxLines: 8,
     )..layout(maxWidth: size.width - padding * 2);
-    final panelHeight = paragraph.height + padding * 2;
-    final top = size.height - panelHeight;
-    final background = Paint()..color = const Color(0xcc123f2c);
-    canvas.drawRect(Rect.fromLTWH(0, top, size.width, panelHeight), background);
-    paragraph.paint(canvas, Offset(padding, top + padding));
+    final offset = Offset(padding, size.height - paragraph.height - padding);
+    final shadowStyle = textStyle.copyWith(color: Colors.black);
+    final shadow = TextPainter(
+      text: TextSpan(text: lines.join('\n'), style: shadowStyle),
+      textDirection: ui.TextDirection.ltr,
+      maxLines: 6,
+    )..layout(maxWidth: size.width - padding * 2);
+    const shadowOffsets = [
+      Offset(-2, -2),
+      Offset(2, -2),
+      Offset(-2, 2),
+      Offset(2, 2),
+      Offset(0, 3),
+    ];
+    for (final shadowOffset in shadowOffsets) {
+      shadow.paint(canvas, offset + shadowOffset * scale);
+    }
+    paragraph.paint(canvas, offset);
 
     final watermarked = await recorder.endRecording().toImage(
       image.width,
@@ -346,18 +350,26 @@ class _CameraMetaPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return Padding(
       padding: const EdgeInsets.all(14),
-      color: const Color(0xcc123f2c),
-      child: Text(
-        lines.join('\n'),
-        maxLines: 7,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-          height: 1.22,
+      child: Align(
+        alignment: Alignment.bottomLeft,
+        child: Text(
+          lines.join('\n'),
+          maxLines: 6,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            height: 1.22,
+            shadows: [
+              Shadow(offset: Offset(-1, -1), blurRadius: 2),
+              Shadow(offset: Offset(1, -1), blurRadius: 2),
+              Shadow(offset: Offset(-1, 1), blurRadius: 2),
+              Shadow(offset: Offset(1, 1), blurRadius: 2),
+              Shadow(offset: Offset(0, 2), blurRadius: 3),
+            ],
+          ),
         ),
       ),
     );

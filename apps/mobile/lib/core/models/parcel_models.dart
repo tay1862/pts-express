@@ -82,6 +82,17 @@ class ParcelPhotoSummary {
   final String? addressText;
   final DateTime createdAt;
 
+  String get displayUrl {
+    if (!url.startsWith('http')) {
+      return url;
+    }
+    final apiBaseUrl = const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'http://localhost:3000/api',
+    );
+    return '$apiBaseUrl/storage/proxy?url=${Uri.encodeComponent(url)}';
+  }
+
   factory ParcelPhotoSummary.fromJson(Map<String, dynamic> json) =>
       ParcelPhotoSummary(
         id: json['id'] as String,

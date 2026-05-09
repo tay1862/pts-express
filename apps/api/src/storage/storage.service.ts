@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -8,6 +8,11 @@ import { PresignUploadDto } from './dto/presign-upload.dto';
 export interface StoredAttachment {
   key: string;
   publicUrl: string;
+}
+
+export interface ProxiedImage {
+  body: Buffer;
+  contentType: string;
 }
 
 export interface Base64AttachmentUpload {
@@ -74,6 +79,40 @@ export class StorageService {
     return {
       key,
       publicUrl: `${publicBaseUrl.replace(/\/$/, '')}/${key}`,
+    };
+  }
+
+  async fetchPublicImage(rawUrl: string): Promise<ProxiedImage> {
+    const publicBaseUrl = this.config.get<string>('R2_PUBLIC_BASE_URL');
+    if (!publicBaseUrl || !rawUrl) {
+      throw new BadRequestException('Invalid image URL');
+    }
+
+    const allowedBase = publicBaseUrl.replace(/\/$/, '');
+    let parsed: URL;
+    try {
+      parsed = new URL(rawUrl);
+    } catch {
+      throw new BadRequestException('Invalid image URL');
+    }
+
+    if (!parsed.toString().startsWith(`${allowedBase}/`)) {
+      throw new BadRequestException('Image URL is not allowed');
+    }
+
+    const response = await fetch(parsed);
+    if (!response.ok) {
+      throw new BadRequestException('Image not found');
+    }
+
+    const contentType = response.headers.get('content-type') ?? 'image/png';
+    if (!contentType.startsWith('image/')) {
+      throw new BadRequestException('URL is not an image');
+    }
+
+    return {
+      body: Buffer.from(await response.arrayBuffer()),
+      contentType,
     };
   }
 
