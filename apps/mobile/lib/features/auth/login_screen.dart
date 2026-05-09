@@ -199,8 +199,8 @@ class LoginBrandHeader extends StatelessWidget {
           children: [
             Image.asset(
               'assets/pts-logo.png',
-              width: 52,
-              height: 52,
+              width: 76,
+              height: 76,
               semanticLabel: 'PTS Express',
             ),
             const SizedBox(width: 12),

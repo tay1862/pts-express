@@ -159,7 +159,7 @@ class PublicTrackingGuestScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('PTS Express'),
         leading: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(7),
           child: Image.asset('assets/pts-logo.png'),
         ),
         actions: [

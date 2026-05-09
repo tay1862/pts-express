@@ -139,18 +139,22 @@ class ShellAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 520;
     return AppBar(
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset('assets/pts-logo.png', width: 32, height: 32),
+          Image.asset(
+            'assets/pts-logo.png',
+            width: compact ? 34 : 42,
+            height: compact ? 34 : 42,
+          ),
           const SizedBox(width: 8),
-          const Text('PTS Express'),
+          Text(compact ? 'PTS' : 'PTS Express'),
         ],
       ),
       actions: [
-        Text(session.displayName),
-        const SizedBox(width: 8),
+        if (!compact) ...[Text(session.displayName), const SizedBox(width: 8)],
         SegmentedButton<String>(
           key: const ValueKey('shell_language_toggle'),
           showSelectedIcon: false,
