@@ -140,7 +140,14 @@ class ShellAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('PTS Express'),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset('assets/pts-logo.png', width: 32, height: 32),
+          const SizedBox(width: 8),
+          const Text('PTS Express'),
+        ],
+      ),
       actions: [
         Text(session.displayName),
         const SizedBox(width: 8),

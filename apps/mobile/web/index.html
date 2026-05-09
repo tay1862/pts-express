@@ -18,21 +18,109 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="PTS Express parcel warehouse and tracking app for Thailand and Laos.">
+  <meta name="theme-color" content="#1f7a4f">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="pts_express_mobile">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PTS Express">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>pts_express_mobile</title>
+  <title>PTS Express</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html,
+    body {
+      background: #fbf8ed;
+      height: 100%;
+      margin: 0;
+    }
+
+    #pts-loader {
+      align-items: center;
+      background: #fbf8ed;
+      color: #123f2c;
+      display: flex;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      height: 100%;
+      justify-content: center;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+    }
+
+    .pts-loader-panel {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .pts-loader-logo {
+      height: 96px;
+      width: 96px;
+    }
+
+    .pts-loader-text {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .pts-loader-bar {
+      background: rgba(31, 122, 79, 0.16);
+      border-radius: 999px;
+      height: 4px;
+      overflow: hidden;
+      width: 128px;
+    }
+
+    .pts-loader-bar::before {
+      animation: pts-loading 1.1s infinite ease-in-out;
+      background: #1f7a4f;
+      border-radius: inherit;
+      content: "";
+      display: block;
+      height: 100%;
+      width: 42%;
+    }
+
+    @keyframes pts-loading {
+      0% {
+        transform: translateX(-110%);
+      }
+      100% {
+        transform: translateX(260%);
+      }
+    }
+
+    body.flutter-loaded #pts-loader {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+  </style>
 </head>
 <body>
+  <div id="pts-loader" aria-label="Loading PTS Express">
+    <div class="pts-loader-panel">
+      <img class="pts-loader-logo" src="pts-logo.png" alt="PTS Express">
+      <div class="pts-loader-text">PTS Express</div>
+      <div class="pts-loader-bar"></div>
+    </div>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      document.body.classList.add('flutter-loaded');
+      window.setTimeout(function () {
+        var loader = document.getElementById('pts-loader');
+        if (loader) loader.remove();
+      }, 260);
+    });
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

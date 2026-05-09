@@ -69,32 +69,10 @@ class ParcelDetailSheetState extends State<ParcelDetailSheet> {
             ),
           if (current.photos.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Text(
-              t(widget.languageCode, 'หลักฐาน', 'ຫຼັກຖານ'),
-              style: Theme.of(context).textTheme.titleMedium,
+            ParcelEvidenceGallery(
+              photos: current.photos,
+              languageCode: widget.languageCode,
             ),
-            const SizedBox(height: 8),
-            for (final photo in current.photos)
-              ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  photo.type == 'SIGNATURE' ? Icons.draw : Icons.photo_camera,
-                ),
-                title: Text(
-                  photo.type == 'SIGNATURE'
-                      ? t(widget.languageCode, 'ลายเซ็น', 'ລາຍເຊັນ')
-                      : t(widget.languageCode, 'รูปถ่าย', 'ຮູບຖ່າຍ'),
-                ),
-                subtitle: Text(
-                  [
-                    if (photo.capturedAt != null)
-                      photo.capturedAt!.toLocal().toString(),
-                    if (photo.addressText?.isNotEmpty == true)
-                      photo.addressText!,
-                  ].join('\n'),
-                ),
-              ),
           ],
           const Divider(height: 32),
           for (final event in current.events)
@@ -125,6 +103,230 @@ class ParcelDetailSheetState extends State<ParcelDetailSheet> {
       reasonController.text,
     );
     setState(() => parcel = updated);
+  }
+}
+
+class ParcelEvidenceGallery extends StatelessWidget {
+  const ParcelEvidenceGallery({
+    super.key,
+    required this.photos,
+    required this.languageCode,
+  });
+
+  final List<ParcelPhotoSummary> photos;
+  final String languageCode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: const ValueKey('parcel_evidence_gallery'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          t(languageCode, 'หลักฐาน', 'ຫຼັກຖານ'),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 620 ? 3 : 2;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: photos.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 0.78,
+              ),
+              itemBuilder: (context, index) => ParcelEvidenceTile(
+                photo: photos[index],
+                languageCode: languageCode,
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class ParcelEvidenceTile extends StatelessWidget {
+  const ParcelEvidenceTile({
+    super.key,
+    required this.photo,
+    required this.languageCode,
+  });
+
+  final ParcelPhotoSummary photo;
+  final String languageCode;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = photo.type == 'SIGNATURE'
+        ? t(languageCode, 'ลายเซ็น', 'ລາຍເຊັນ')
+        : t(languageCode, 'รูปถ่าย', 'ຮູບຖ່າຍ');
+    return InkWell(
+      key: ValueKey('parcel_evidence_${photo.id}'),
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (context) =>
+            ParcelEvidencePreview(photo: photo, languageCode: languageCode),
+      ),
+      child: Card(
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: ParcelEvidenceImage(photo: photo)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        photo.type == 'SIGNATURE'
+                            ? Icons.draw
+                            : Icons.photo_camera,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  EvidenceMeta(photo: photo),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ParcelEvidenceImage extends StatelessWidget {
+  const ParcelEvidenceImage({super.key, required this.photo});
+
+  final ParcelPhotoSummary photo;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Image.network(
+        photo.url,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) {
+            return child;
+          }
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        },
+        errorBuilder: (context, error, stackTrace) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Icon(
+              photo.type == 'SIGNATURE'
+                  ? Icons.draw_outlined
+                  : Icons.broken_image_outlined,
+              color: Theme.of(context).colorScheme.outline,
+              size: 34,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class EvidenceMeta extends StatelessWidget {
+  const EvidenceMeta({super.key, required this.photo});
+
+  final ParcelPhotoSummary photo;
+
+  @override
+  Widget build(BuildContext context) {
+    final lines = [
+      if (photo.capturedAt != null) photo.capturedAt!.toLocal().toString(),
+      if (photo.addressText?.trim().isNotEmpty == true) photo.addressText!,
+    ];
+    if (lines.isEmpty) {
+      return const SizedBox(height: 18);
+    }
+    return Text(
+      lines.join('\n'),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.bodySmall,
+    );
+  }
+}
+
+class ParcelEvidencePreview extends StatelessWidget {
+  const ParcelEvidencePreview({
+    super.key,
+    required this.photo,
+    required this.languageCode,
+  });
+
+  final ParcelPhotoSummary photo;
+  final String languageCode;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = photo.type == 'SIGNATURE'
+        ? t(languageCode, 'ลายเซ็น', 'ລາຍເຊັນ')
+        : t(languageCode, 'รูปถ่าย', 'ຮູບຖ່າຍ');
+    return Dialog.fullscreen(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+          actions: [
+            IconButton(
+              tooltip: t(languageCode, 'ปิด', 'ປິດ'),
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4,
+                child: Image.network(
+                  photo.url,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: SelectableText(photo.url),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            EvidenceMeta(photo: photo),
+          ],
+        ),
+      ),
+    );
   }
 }
 

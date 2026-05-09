@@ -54,7 +54,7 @@ class LoginPanel extends StatefulWidget {
 }
 
 class LoginPanelState extends State<LoginPanel> {
-  final usernameController = TextEditingController(text: 'admin');
+  final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
   @override
@@ -195,7 +195,23 @@ class LoginBrandHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PTS Express', style: Theme.of(context).textTheme.headlineLarge),
+        Row(
+          children: [
+            Image.asset(
+              'assets/pts-logo.png',
+              width: 52,
+              height: 52,
+              semanticLabel: 'PTS Express',
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'PTS Express',
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 6),
         Text(
           t(languageCode, 'ระบบโกดัง ไทย - ลาว', 'ລະບົບສາງ ໄທ - ລາວ'),

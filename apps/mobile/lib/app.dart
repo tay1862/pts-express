@@ -158,6 +158,10 @@ class PublicTrackingGuestScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('PTS Express'),
+        leading: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Image.asset('assets/pts-logo.png'),
+        ),
         actions: [
           SegmentedButton<String>(
             key: const ValueKey('guest_language_toggle'),
