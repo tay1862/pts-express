@@ -1,0 +1,12 @@
+services:
+  caddy:
+    environment:
+      DOMAIN: ":80"
+    ports: !override []
+    networks:
+      - default
+      - web_proxy
+
+networks:
+  web_proxy:
+    external: true
