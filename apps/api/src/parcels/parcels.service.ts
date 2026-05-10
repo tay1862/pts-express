@@ -35,8 +35,17 @@ const statusOrder = [
   ParcelStatus.PICKED_UP,
 ];
 
+type WarehouseCacheEntry = {
+  id: string;
+  code: WarehouseCode;
+  name: string;
+  country: string;
+};
+
 @Injectable()
 export class ParcelsService {
+  private readonly warehouseCache = new Map<WarehouseCode, WarehouseCacheEntry>();
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
@@ -332,12 +341,13 @@ export class ParcelsService {
     });
 
     let current: ParcelStatus | null = null;
+    let lastParcel: any = null;
     const statuses = statusOrder.slice(
       0,
       statusOrder.indexOf(targetStatus) + 1,
     );
     for (const [index, next] of statuses.entries()) {
-      await this.writeStatusEvent(
+      lastParcel = await this.writeStatusEvent(
         parcel.id,
         current,
         next,
@@ -353,6 +363,7 @@ export class ParcelsService {
               : dto.note,
         },
         actor,
+        index === statuses.length - 1,
       );
       current = next;
     }
@@ -367,7 +378,7 @@ export class ParcelsService {
         clientMutationId: dto.clientMutationId,
       },
     );
-    return this.findById(parcel.id);
+    return lastParcel ?? this.findById(parcel.id);
   }
 
   private async writeStatusEvent(
@@ -376,6 +387,7 @@ export class ParcelsService {
     toStatus: ParcelStatus,
     dto: AdvanceParcelDto,
     actor: RequestUser,
+    includeParcel = true,
   ) {
     const warehouse = await this.warehouseForStatus(toStatus);
     const eventId = await this.prisma.$transaction(async (tx) => {
@@ -416,6 +428,9 @@ export class ParcelsService {
       return event.id;
     });
     await this.saveAttachments(parcelId, eventId, dto.attachments, actor);
+    if (!includeParcel) {
+      return null;
+    }
     return this.findById(parcelId);
   }
 
@@ -429,38 +444,40 @@ export class ParcelsService {
       return;
     }
 
-    for (const attachment of attachments) {
-      const stored = await this.storage.storeBase64Attachment(attachment);
-      const photo = await this.prisma.parcelPhoto.create({
-        data: {
+    await Promise.all(
+      attachments.map(async (attachment) => {
+        const stored = await this.storage.storeBase64Attachment(attachment);
+        const photo = await this.prisma.parcelPhoto.create({
+          data: {
+            parcelId,
+            eventId,
+            type: attachment.type,
+            url: stored.publicUrl,
+            key: stored.key,
+            note: attachment.note,
+            capturedAt: this.optionalDate(attachment.capturedAt),
+            latitude: attachment.latitude,
+            longitude: attachment.longitude,
+            accuracyMeters: attachment.accuracyMeters,
+            addressText: attachment.addressText,
+            uploadedBy: actor.id,
+          },
+        });
+        await this.audit(
+          attachment.type === ParcelPhotoType.SIGNATURE
+            ? 'parcel.signature_added'
+            : 'parcel.photo_added',
+          'parcel',
           parcelId,
-          eventId,
-          type: attachment.type,
-          url: stored.publicUrl,
-          key: stored.key,
-          note: attachment.note,
-          capturedAt: this.optionalDate(attachment.capturedAt),
-          latitude: attachment.latitude,
-          longitude: attachment.longitude,
-          accuracyMeters: attachment.accuracyMeters,
-          addressText: attachment.addressText,
-          uploadedBy: actor.id,
-        },
-      });
-      await this.audit(
-        attachment.type === ParcelPhotoType.SIGNATURE
-          ? 'parcel.signature_added'
-          : 'parcel.photo_added',
-        'parcel',
-        parcelId,
-        actor,
-        {
-          photoId: photo.id,
-          eventId,
-          type: attachment.type,
-        },
-      );
-    }
+          actor,
+          {
+            photoId: photo.id,
+            eventId,
+            type: attachment.type,
+          },
+        );
+      }),
+    );
   }
 
   private async generateFallbackTrackingCode(prefix: string) {
@@ -535,7 +552,15 @@ export class ParcelsService {
   }
 
   private async requiredWarehouse(code: WarehouseCode) {
-    return this.prisma.warehouse.findUniqueOrThrow({ where: { code } });
+    const cached = this.warehouseCache.get(code);
+    if (cached) {
+      return cached;
+    }
+    const warehouse = await this.prisma.warehouse.findUniqueOrThrow({
+      where: { code },
+    });
+    this.warehouseCache.set(code, warehouse);
+    return warehouse;
   }
 
   private happenedAt(value?: string) {

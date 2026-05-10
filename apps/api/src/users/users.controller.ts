@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -13,7 +14,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { RequestUser } from '../common/types/request-user';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { CreateUserDto, ResetPasswordDto, UpdateUserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -25,6 +26,11 @@ export class UsersController {
   @Get()
   list() {
     return this.users.list();
+  }
+
+  @Get(':id')
+  findById(@Param('id') id: string) {
+    return this.users.findById(id);
   }
 
   @Post()
@@ -39,5 +45,19 @@ export class UsersController {
     @CurrentUser() actor: RequestUser,
   ) {
     return this.users.update(id, dto, actor);
+  }
+
+  @Post(':id/reset-password')
+  resetPassword(
+    @Param('id') id: string,
+    @Body() dto: ResetPasswordDto,
+    @CurrentUser() actor: RequestUser,
+  ) {
+    return this.users.resetPassword(id, dto, actor);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() actor: RequestUser) {
+    return this.users.remove(id, actor);
   }
 }
