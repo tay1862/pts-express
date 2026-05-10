@@ -20,10 +20,15 @@ describe('HealthController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/health')
       .expect(200)
-      .expect(({ body }) => {
-        expect(body.ok).toBe(true);
-        expect(body.service).toBe('pts-express-api');
-        expect(typeof body.timestamp).toBe('string');
-      });
+      .expect(
+        (response: {
+          body: { ok: boolean; service: string; timestamp: string };
+        }) => {
+          const { body } = response;
+          expect(body.ok).toBe(true);
+          expect(body.service).toBe('pts-express-api');
+          expect(typeof body.timestamp).toBe('string');
+        },
+      );
   });
 });
