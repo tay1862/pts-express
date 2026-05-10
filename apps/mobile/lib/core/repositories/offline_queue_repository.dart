@@ -8,6 +8,26 @@ import '../models/evidence_attachment.dart';
 import '../models/parcel_models.dart';
 import '../models/parcel_status.dart';
 
+class SyncQueueEntry {
+  const SyncQueueEntry({
+    required this.clientMutationId,
+    required this.type,
+    required this.deviceId,
+    required this.happenedAt,
+    required this.attempts,
+    required this.lastError,
+    required this.synced,
+  });
+
+  final String clientMutationId;
+  final String type;
+  final String deviceId;
+  final DateTime happenedAt;
+  final int attempts;
+  final String? lastError;
+  final bool synced;
+}
+
 class OfflineQueueRepository {
   OfflineQueueRepository(this._database);
 
@@ -16,6 +36,40 @@ class OfflineQueueRepository {
 
   Future<int> pendingCount() async =>
       (await _database.pendingOperations()).length;
+
+  Future<List<SyncQueueEntry>> pendingEntries() async {
+    final rows = await _database.pendingOperations();
+    return rows
+        .map(
+          (row) => SyncQueueEntry(
+            clientMutationId: row.clientMutationId,
+            type: row.type,
+            deviceId: row.deviceId,
+            happenedAt: row.happenedAt,
+            attempts: row.attempts,
+            lastError: row.lastError,
+            synced: row.synced,
+          ),
+        )
+        .toList();
+  }
+
+  Future<List<SyncQueueEntry>> failedEntries() async {
+    final rows = await _database.failedOperations();
+    return rows
+        .map(
+          (row) => SyncQueueEntry(
+            clientMutationId: row.clientMutationId,
+            type: row.type,
+            deviceId: row.deviceId,
+            happenedAt: row.happenedAt,
+            attempts: row.attempts,
+            lastError: row.lastError,
+            synced: row.synced,
+          ),
+        )
+        .toList();
+  }
 
   Future<String> enqueueReceive({
     required String trackingCode,
@@ -130,9 +184,17 @@ class OfflineQueueRepository {
           },
         )
         .toList();
-    await apiClient.syncPush(operations);
-    for (final operation in pending) {
-      await _database.markSynced(operation.clientMutationId);
+    try {
+      await apiClient.syncPush(operations);
+      await _database.markSyncedAll(
+        pending.map((operation) => operation.clientMutationId),
+      );
+    } catch (error) {
+      await _database.markFailedAll(
+        pending.map((operation) => operation.clientMutationId),
+        error,
+      );
+      rethrow;
     }
   }
 

@@ -108,6 +108,16 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  Future<List<SyncOperation>> failedOperations() {
+    return (select(syncOperations)
+          ..where(
+            (operation) =>
+                operation.synced.equals(false) & operation.lastError.isNotNull(),
+          )
+          ..orderBy([(operation) => OrderingTerm.desc(operation.happenedAt)]))
+        .get();
+  }
+
   Future<void> markSynced(String clientMutationId) {
     return (update(
       syncOperations,
@@ -119,10 +129,43 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<void> markSyncedAll(Iterable<String> clientMutationIds) {
+    final ids = clientMutationIds.toList();
+    if (ids.isEmpty) {
+      return Future.value();
+    }
+    return (update(
+      syncOperations,
+    )..where((row) => row.clientMutationId.isIn(ids))).write(
+      const SyncOperationsCompanion(
+        synced: Value(true),
+        lastError: Value(null),
+      ),
+    );
+  }
+
   Future<void> markFailed(String clientMutationId, Object error) {
     return (update(
       syncOperations,
     )..where((row) => row.clientMutationId.equals(clientMutationId))).write(
+      SyncOperationsCompanion(
+        attempts: const Value(0),
+        lastError: Value(error.toString()),
+      ),
+    );
+  }
+
+  Future<void> markFailedAll(
+    Iterable<String> clientMutationIds,
+    Object error,
+  ) {
+    final ids = clientMutationIds.toList();
+    if (ids.isEmpty) {
+      return Future.value();
+    }
+    return (update(
+      syncOperations,
+    )..where((row) => row.clientMutationId.isIn(ids))).write(
       SyncOperationsCompanion(
         attempts: const Value(0),
         lastError: Value(error.toString()),
