@@ -18,10 +18,10 @@ class AdminScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) =>
           AdminCubit(
-            context.read<ApiClient>(),
-            context.read<OfflineQueueRepository>(),
-            languageCode,
-          )
+              context.read<ApiClient>(),
+              context.read<OfflineQueueRepository>(),
+              languageCode,
+            )
             ..loadUsers()
             ..loadQueue(),
       child: AdminWorkspace(languageCode: languageCode),
@@ -100,9 +100,12 @@ class AdminWorkspaceState extends State<AdminWorkspace> {
                         isScrollable: true,
                         tabAlignment: TabAlignment.start,
                         tabs: [
-                          Tab(text: t(widget.languageCode, 'พนักงาน', 'ພະນັກງານ')),
                           Tab(
-                            text: '${t(widget.languageCode, 'คิวผิดปกติ', 'ຄິວຜິດປົກກະຕິ')} (${state.queueEntries.length})',
+                            text: t(widget.languageCode, 'พนักงาน', 'ພະນັກງານ'),
+                          ),
+                          Tab(
+                            text:
+                                '${t(widget.languageCode, 'คิวผิดปกติ', 'ຄິວຜິດປົກກະຕິ')} (${state.queueEntries.length})',
                           ),
                         ],
                       ),
@@ -112,7 +115,8 @@ class AdminWorkspaceState extends State<AdminWorkspace> {
               ),
             ),
             const SizedBox(height: 8),
-            if (state.loading || state.queueLoading) const LinearProgressIndicator(),
+            if (state.loading || state.queueLoading)
+              const LinearProgressIndicator(),
             if (state.error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -144,7 +148,8 @@ class AdminWorkspaceState extends State<AdminWorkspace> {
                         isActive: isActive,
                         languageCode: widget.languageCode,
                         onRoleChanged: (value) => setState(() => role = value),
-                        onIsActiveChanged: (value) => setState(() => isActive = value),
+                        onIsActiveChanged: (value) =>
+                            setState(() => isActive = value),
                         onSubmit: submitUser,
                         onCancel: editingUser == null ? null : clearForm,
                       ),
@@ -161,27 +166,48 @@ class AdminWorkspaceState extends State<AdminWorkspace> {
                                   : Theme.of(context).colorScheme.outline,
                             ),
                             trailing: PopupMenuButton<String>(
-                              onSelected: (value) => handleUserAction(context, user, value),
+                              onSelected: (value) =>
+                                  handleUserAction(context, user, value),
                               itemBuilder: (context) => [
                                 PopupMenuItem(
                                   value: 'edit',
-                                  child: Text(t(widget.languageCode, 'แก้ไข', 'ແກ້ໄข')),
+                                  child: Text(
+                                    t(widget.languageCode, 'แก้ไข', 'ແກ້ໄຂ'),
+                                  ),
                                 ),
                                 PopupMenuItem(
                                   value: 'reset',
-                                  child: Text(t(widget.languageCode, 'รีเซ็ตรหัสผ่าน', 'ຣີເຊັດລະຫັດຜ່ານ')),
+                                  child: Text(
+                                    t(
+                                      widget.languageCode,
+                                      'รีเซ็ตรหัสผ่าน',
+                                      'ຣີເຊັດລະຫັດຜ່ານ',
+                                    ),
+                                  ),
                                 ),
                                 PopupMenuItem(
-                                  value: user.isActive ? 'deactivate' : 'reactivate',
+                                  value: user.isActive
+                                      ? 'deactivate'
+                                      : 'reactivate',
                                   child: Text(
                                     user.isActive
-                                        ? t(widget.languageCode, 'ปิดใช้งาน', 'ປິດໃຊ້ງານ')
-                                        : t(widget.languageCode, 'เปิดใช้งาน', 'ເປີດໃຊ້ງານ'),
+                                        ? t(
+                                            widget.languageCode,
+                                            'ปิดใช้งาน',
+                                            'ປິດໃຊ້ງານ',
+                                          )
+                                        : t(
+                                            widget.languageCode,
+                                            'เปิดใช้งาน',
+                                            'ເປີດໃຊ້ງານ',
+                                          ),
                                   ),
                                 ),
                                 PopupMenuItem(
                                   value: 'delete',
-                                  child: Text(t(widget.languageCode, 'ลบ', 'ລຶບ')),
+                                  child: Text(
+                                    t(widget.languageCode, 'ลบ', 'ລຶບ'),
+                                  ),
                                 ),
                               ],
                             ),
@@ -195,7 +221,11 @@ class AdminWorkspaceState extends State<AdminWorkspace> {
                       Row(
                         children: [
                           Text(
-                            t(widget.languageCode, 'คิวที่รอซิงก์/ผิดพลาด', 'ຄິວທີ່ລໍຖ້າຊິງຄ໌/ຜິດພາດ'),
+                            t(
+                              widget.languageCode,
+                              'คิวที่รอซิงก์/ผิดพลาด',
+                              'ຄິວທີ່ລໍຖ້າຊິງຄ໌/ຜິດພາດ',
+                            ),
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const Spacer(),
@@ -205,7 +235,13 @@ class AdminWorkspaceState extends State<AdminWorkspace> {
                                 ? null
                                 : () => context.read<AdminCubit>().retryQueue(),
                             icon: const Icon(Icons.refresh),
-                            label: Text(t(widget.languageCode, 'ลองซิงก์ใหม่', 'ລອງຊິງຄ໌ໃໝ່')),
+                            label: Text(
+                              t(
+                                widget.languageCode,
+                                'ลองซิงก์ใหม่',
+                                'ລອງຊິງຄ໌ໃໝ່',
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -227,7 +263,11 @@ class AdminWorkspaceState extends State<AdminWorkspace> {
                           padding: const EdgeInsets.only(top: 24),
                           child: Center(
                             child: Text(
-                              t(widget.languageCode, 'ไม่มีคิวค้าง', 'ບໍ່ມີຄິວຄ້າງ'),
+                              t(
+                                widget.languageCode,
+                                'ไม่มีคิวค้าง',
+                                'ບໍ່ມີຄິວຄ້າງ',
+                              ),
                             ),
                           ),
                         ),
@@ -353,7 +393,7 @@ class AdminCreateUserForm extends StatelessWidget {
             Text(
               editingUser == null
                   ? t(languageCode, 'สร้างพนักงาน', 'ສ້າງພະນັກງານ')
-                  : t(languageCode, 'แก้ไขพนักงาน', 'ແກ້ໄขພະນັກງານ'),
+                  : t(languageCode, 'แก้ไขพนักงาน', 'ແກ້ໄຂພະນັກງານ'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
@@ -369,7 +409,7 @@ class AdminCreateUserForm extends StatelessWidget {
                     controller: usernameController,
                     enabled: editingUser == null,
                     decoration: InputDecoration(
-                      labelText: t(languageCode, 'ชื่อผู้ใช้', 'ຊື່ຜູ້ໃຊ้'),
+                      labelText: t(languageCode, 'ชื่อผู้ใช้', 'ຊື່ຜູ້ໃຊ້'),
                     ),
                   ),
                 ),
@@ -417,17 +457,19 @@ class AdminCreateUserForm extends StatelessWidget {
                 FilledButton.icon(
                   key: const ValueKey('admin_submit_user_button'),
                   onPressed: onSubmit,
-                  icon: Icon(editingUser == null ? Icons.person_add : Icons.save),
+                  icon: Icon(
+                    editingUser == null ? Icons.person_add : Icons.save,
+                  ),
                   label: Text(
                     editingUser == null
-                        ? t(languageCode, 'สร้างผู้ใช้', 'ສ້າງຜູ້ໃຊ้')
-                        : t(languageCode, 'บันทึก', 'ບັນທึກ'),
+                        ? t(languageCode, 'สร้างผู้ใช้', 'ສ້າງຜູ້ໃຊ້')
+                        : t(languageCode, 'บันทึก', 'ບັນທຶກ'),
                   ),
                 ),
                 if (onCancel != null)
                   OutlinedButton(
                     onPressed: onCancel,
-                    child: Text(t(languageCode, 'ยกเลิก', 'ຍົກເລີก')),
+                    child: Text(t(languageCode, 'ยกเลิก', 'ຍົກເລີກ')),
                   ),
               ],
             ),

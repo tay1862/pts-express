@@ -34,8 +34,9 @@ class AdminState {
       queueLoading: queueLoading ?? this.queueLoading,
       queueEntries: queueEntries ?? this.queueEntries,
       error: error == _unset ? this.error : error as String?,
-      queueError:
-          queueError == _unset ? this.queueError : queueError as String?,
+      queueError: queueError == _unset
+          ? this.queueError
+          : queueError as String?,
     );
   }
 }

@@ -112,7 +112,8 @@ class AppDatabase extends _$AppDatabase {
     return (select(syncOperations)
           ..where(
             (operation) =>
-                operation.synced.equals(false) & operation.lastError.isNotNull(),
+                operation.synced.equals(false) &
+                operation.lastError.isNotNull(),
           )
           ..orderBy([(operation) => OrderingTerm.desc(operation.happenedAt)]))
         .get();
@@ -155,10 +156,7 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<void> markFailedAll(
-    Iterable<String> clientMutationIds,
-    Object error,
-  ) {
+  Future<void> markFailedAll(Iterable<String> clientMutationIds, Object error) {
     final ids = clientMutationIds.toList();
     if (ids.isEmpty) {
       return Future.value();

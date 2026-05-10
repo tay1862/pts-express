@@ -8,11 +8,7 @@ import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { RequestUser } from '../common/types/request-user';
 import { PrismaService } from '../prisma.service';
-import {
-  CreateUserDto,
-  ResetPasswordDto,
-  UpdateUserDto,
-} from './dto/user.dto';
+import { CreateUserDto, ResetPasswordDto, UpdateUserDto } from './dto/user.dto';
 
 @Injectable()
 export class UsersService {
@@ -172,7 +168,9 @@ export class UsersService {
       },
     });
     if (activePrivilegedCount === 0) {
-      throw new BadRequestException('At least one active OWNER or ADMIN is required');
+      throw new BadRequestException(
+        'At least one active OWNER or ADMIN is required',
+      );
     }
   }
 
@@ -180,7 +178,10 @@ export class UsersService {
     if (this.isPrismaConflict(error)) {
       throw new ConflictException(`Unable to ${context}: duplicate value`);
     }
-    throw error as never;
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`Unable to ${context}`);
   }
 
   private isPrismaConflict(error: unknown) {

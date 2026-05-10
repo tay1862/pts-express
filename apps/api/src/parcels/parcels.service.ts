@@ -35,6 +35,15 @@ const statusOrder = [
   ParcelStatus.PICKED_UP,
 ];
 
+const parcelInclude = Prisma.validator<Prisma.ParcelInclude>()({
+  codes: true,
+  events: { orderBy: { happenedAt: 'asc' } },
+  photos: true,
+  currentWarehouse: true,
+});
+
+type ParcelDetails = Prisma.ParcelGetPayload<{ include: typeof parcelInclude }>;
+
 type WarehouseCacheEntry = {
   id: string;
   code: WarehouseCode;
@@ -44,7 +53,10 @@ type WarehouseCacheEntry = {
 
 @Injectable()
 export class ParcelsService {
-  private readonly warehouseCache = new Map<WarehouseCode, WarehouseCacheEntry>();
+  private readonly warehouseCache = new Map<
+    WarehouseCode,
+    WarehouseCacheEntry
+  >();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -65,16 +77,16 @@ export class ParcelsService {
             ]
           : undefined,
       },
-      include: this.parcelInclude(),
+      include: parcelInclude,
       orderBy: { updatedAt: 'desc' },
       take: 100,
     });
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<ParcelDetails> {
     const parcel = await this.prisma.parcel.findUnique({
       where: { id },
-      include: this.parcelInclude(),
+      include: parcelInclude,
     });
     if (!parcel) {
       throw new NotFoundException('Parcel not found');
@@ -273,7 +285,7 @@ export class ParcelsService {
     targetStatus: ParcelStatus,
     dto: AdvanceParcelDto,
     actor: RequestUser,
-  ) {
+  ): Promise<ParcelDetails> {
     if (dto.clientMutationId) {
       const existingEvent = await this.findEventByMutation(
         dto.clientMutationId,
@@ -297,13 +309,17 @@ export class ParcelsService {
       );
     }
 
-    return this.writeStatusEvent(
+    const updatedParcel = await this.writeStatusEvent(
       parcel.id,
       parcel.status,
       targetStatus,
       dto,
       actor,
     );
+    if (!updatedParcel) {
+      throw new NotFoundException('Parcel not found after status update');
+    }
+    return updatedParcel;
   }
 
   private async createMissingParcel(
@@ -311,7 +327,7 @@ export class ParcelsService {
     targetStatus: ParcelStatus,
     dto: AdvanceParcelDto,
     actor: RequestUser,
-  ) {
+  ): Promise<ParcelDetails> {
     if (!dto.customerName?.trim()) {
       throw new BadRequestException(
         'customerName is required for unknown scans',
@@ -341,7 +357,7 @@ export class ParcelsService {
     });
 
     let current: ParcelStatus | null = null;
-    let lastParcel: any = null;
+    let lastParcel: ParcelDetails | null = null;
     const statuses = statusOrder.slice(
       0,
       statusOrder.indexOf(targetStatus) + 1,
@@ -388,7 +404,7 @@ export class ParcelsService {
     dto: AdvanceParcelDto,
     actor: RequestUser,
     includeParcel = true,
-  ) {
+  ): Promise<ParcelDetails | null> {
     const warehouse = await this.warehouseForStatus(toStatus);
     const eventId = await this.prisma.$transaction(async (tx) => {
       await tx.parcel.update({
@@ -569,15 +585,6 @@ export class ParcelsService {
 
   private optionalDate(value?: string) {
     return value ? new Date(value) : undefined;
-  }
-
-  private parcelInclude() {
-    return {
-      codes: true,
-      events: { orderBy: { happenedAt: 'asc' as const } },
-      photos: true,
-      currentWarehouse: true,
-    };
   }
 
   private auditData(

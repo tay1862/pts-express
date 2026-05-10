@@ -26,7 +26,7 @@ export class SyncService {
   private async applyOperation(
     operation: SyncOperationDto,
     actor: RequestUser,
-  ) {
+  ): Promise<Awaited<ReturnType<ParcelsService['receive']>>> {
     const common = {
       clientMutationId: operation.clientMutationId,
       deviceId: operation.deviceId,
@@ -35,7 +35,7 @@ export class SyncService {
 
     if (operation.type === SyncOperationType.RECEIVE) {
       const payload = operation.payload as unknown as ReceiveParcelDto;
-      return this.parcels.receive({ ...payload, ...common }, actor);
+      return await this.parcels.receive({ ...payload, ...common }, actor);
     }
 
     const payload = operation.payload as AdvanceParcelDto & {
@@ -48,7 +48,7 @@ export class SyncService {
     }
 
     if (operation.type === SyncOperationType.ARRIVE) {
-      return this.parcels.arrive(
+      return await this.parcels.arrive(
         payload.trackingCode,
         { ...payload, ...common },
         actor,
@@ -56,7 +56,7 @@ export class SyncService {
     }
 
     if (operation.type === SyncOperationType.PICKUP) {
-      return this.parcels.pickup(
+      return await this.parcels.pickup(
         payload.trackingCode,
         { ...payload, ...common },
         actor,

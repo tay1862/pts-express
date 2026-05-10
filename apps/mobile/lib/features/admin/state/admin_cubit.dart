@@ -6,11 +6,8 @@ import '../../../core/repositories/offline_queue_repository.dart';
 import 'admin_state.dart';
 
 class AdminCubit extends Cubit<AdminState> {
-  AdminCubit(
-    this._apiClient,
-    this._offlineQueue,
-    this._languageCode,
-  ) : super(const AdminState());
+  AdminCubit(this._apiClient, this._offlineQueue, this._languageCode)
+    : super(const AdminState());
 
   final ApiClient _apiClient;
   final OfflineQueueRepository _offlineQueue;
@@ -144,7 +141,11 @@ class AdminCubit extends Cubit<AdminState> {
       emit(
         state.copyWith(
           queueLoading: false,
-          queueError: t(_languageCode, 'ลองซิงก์ใหม่ไม่ได้', 'ລອງຊິງຄ໌ໃໝ່ບໍ່ໄດ້'),
+          queueError: t(
+            _languageCode,
+            'ลองซิงก์ใหม่ไม่ได้',
+            'ລອງຊິງຄ໌ໃໝ່ບໍ່ໄດ້',
+          ),
         ),
       );
     }
