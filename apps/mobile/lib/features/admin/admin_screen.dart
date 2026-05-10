@@ -165,7 +165,7 @@ class AdminWorkspaceState extends State<AdminWorkspace> {
                               itemBuilder: (context) => [
                                 PopupMenuItem(
                                   value: 'edit',
-                                  child: Text(t(widget.languageCode, 'แก้ไข', 'ແກ້ໄຂ')),
+                                  child: Text(t(widget.languageCode, 'แก้ไข', 'ແກ້ໄข')),
                                 ),
                                 PopupMenuItem(
                                   value: 'reset',
@@ -369,7 +369,7 @@ class AdminCreateUserForm extends StatelessWidget {
                     controller: usernameController,
                     enabled: editingUser == null,
                     decoration: InputDecoration(
-                      labelText: t(languageCode, 'ชื่อผู้ใช้', 'ຊື່ຜູ້ໃຊ້'),
+                      labelText: t(languageCode, 'ชื่อผู้ใช้', 'ຊື່ຜູ້ໃຊ้'),
                     ),
                   ),
                 ),
@@ -420,8 +420,8 @@ class AdminCreateUserForm extends StatelessWidget {
                   icon: Icon(editingUser == null ? Icons.person_add : Icons.save),
                   label: Text(
                     editingUser == null
-                        ? t(languageCode, 'สร้างผู้ใช้', 'ສ້າງຜູ້ໃຊ້')
-                        : t(languageCode, 'บันทึก', 'ບັນທຶກ'),
+                        ? t(languageCode, 'สร้างผู้ใช้', 'ສ້າງຜູ້ໃຊ้')
+                        : t(languageCode, 'บันทึก', 'ບັນທึກ'),
                   ),
                 ),
                 if (onCancel != null)
@@ -467,7 +467,7 @@ class _ResetPasswordDialog extends StatelessWidget {
         ),
         FilledButton(
           onPressed: () async => onSubmit(),
-          child: Text(t(languageCode, 'บันทึก', 'ບັນທຶก')),
+          child: Text(t(languageCode, 'บันทึก', 'ບັນທຶກ')),
         ),
       ],
     );
