@@ -129,11 +129,40 @@ class ApiClient {
         .toList();
   }
 
+  Future<AdminUser> user(String userId) async {
+    final response = await _dio.get<Map<String, dynamic>>('/users/$userId');
+    return AdminUser.fromJson(response.data!);
+  }
+
   Future<AdminUser> createUser(Map<String, dynamic> payload) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/users',
       data: payload,
     );
+    return AdminUser.fromJson(response.data!);
+  }
+
+  Future<AdminUser> updateUser(
+    String userId,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/users/$userId',
+      data: payload,
+    );
+    return AdminUser.fromJson(response.data!);
+  }
+
+  Future<AdminUser> resetUserPassword(String userId, String password) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/users/$userId/reset-password',
+      data: {'password': password},
+    );
+    return AdminUser.fromJson(response.data!);
+  }
+
+  Future<AdminUser> deleteUser(String userId) async {
+    final response = await _dio.delete<Map<String, dynamic>>('/users/$userId');
     return AdminUser.fromJson(response.data!);
   }
 
