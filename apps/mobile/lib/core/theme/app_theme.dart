@@ -1,23 +1,33 @@
 import 'package:flutter/material.dart';
 
-ThemeData buildPtsTheme() {
+const _seedColor = Color(0xff1f7a4f);
+
+ThemeData buildPtsTheme([Brightness brightness = Brightness.light]) {
+  final isLight = brightness == Brightness.light;
   final colorScheme = ColorScheme.fromSeed(
-    seedColor: const Color(0xff1f7a4f),
-    brightness: Brightness.light,
+    seedColor: _seedColor,
+    brightness: brightness,
   );
+  final scaffoldBg = isLight ? const Color(0xfffbf8ed) : colorScheme.surface;
+  final cardBg = isLight
+      ? const Color(0xfffffdf6)
+      : colorScheme.surfaceContainerHigh;
+  final appBarFg = isLight ? const Color(0xff123f2c) : colorScheme.onSurface;
+
   return ThemeData(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: const Color(0xfffbf8ed),
+    scaffoldBackgroundColor: scaffoldBg,
     useMaterial3: true,
-    appBarTheme: const AppBarTheme(
+    brightness: brightness,
+    appBarTheme: AppBarTheme(
       centerTitle: false,
-      backgroundColor: Color(0xfffbf8ed),
-      foregroundColor: Color(0xff123f2c),
+      backgroundColor: scaffoldBg,
+      foregroundColor: appBarFg,
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       filled: true,
-      fillColor: const Color(0xfffffdf6),
+      fillColor: cardBg,
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
       style: ButtonStyle(
@@ -29,7 +39,7 @@ ThemeData buildPtsTheme() {
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      color: const Color(0xfffffdf6),
+      color: cardBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: colorScheme.outlineVariant),
@@ -37,3 +47,6 @@ ThemeData buildPtsTheme() {
     ),
   );
 }
+
+ThemeData buildPtsLightTheme() => buildPtsTheme(Brightness.light);
+ThemeData buildPtsDarkTheme() => buildPtsTheme(Brightness.dark);

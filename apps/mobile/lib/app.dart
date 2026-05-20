@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/api/api_client.dart';
+import 'core/build/app_build_info.dart';
 import 'core/models/parcel_models.dart';
 import 'core/repositories/offline_queue_repository.dart';
 import 'core/repositories/parcel_repository.dart';
@@ -37,6 +38,7 @@ class PtsApp extends StatefulWidget {
 class PtsAppState extends State<PtsApp> with WidgetsBindingObserver {
   UserSession? session;
   String languageCode = 'th';
+  ThemeMode themeMode = ThemeMode.system;
   bool loading = true;
   bool showingPublicTracking = false;
 
@@ -65,20 +67,33 @@ class PtsAppState extends State<PtsApp> with WidgetsBindingObserver {
   Future<void> loadSession() async {
     final nextSession = await widget.sessionStore.session();
     final nextLanguage = await widget.sessionStore.languageCode();
+    final nextTheme = await widget.sessionStore.themeMode();
     if (!mounted) {
       return;
     }
     setState(() {
       session = nextSession;
       languageCode = nextLanguage;
+      themeMode = _parseThemeMode(nextTheme);
       loading = false;
     });
     widget.autoSync.setEnabled(nextSession != null);
   }
 
+  static ThemeMode _parseThemeMode(String value) => switch (value) {
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.system,
+  };
+
   Future<void> setLanguageCode(String value) async {
     await widget.sessionStore.saveLanguageCode(value);
     setState(() => languageCode = value);
+  }
+
+  Future<void> setThemeMode(ThemeMode value) async {
+    await widget.sessionStore.saveThemeMode(value.name);
+    setState(() => themeMode = value);
   }
 
   Future<void> setSession(UserSession value) async {
@@ -111,7 +126,9 @@ class PtsAppState extends State<PtsApp> with WidgetsBindingObserver {
       ],
       child: MaterialApp(
         title: 'PTS Express',
-        theme: buildPtsTheme(),
+        theme: buildPtsLightTheme(),
+        darkTheme: buildPtsDarkTheme(),
+        themeMode: themeMode,
         debugShowCheckedModeBanner: false,
         home: loading
             ? const AppLoadingScreen()
@@ -133,7 +150,9 @@ class PtsAppState extends State<PtsApp> with WidgetsBindingObserver {
             : HomeShell(
                 session: session!,
                 languageCode: languageCode,
+                themeMode: themeMode,
                 onLanguageChanged: setLanguageCode,
+                onThemeModeChanged: setThemeMode,
                 onLogout: logout,
               ),
       ),
@@ -163,6 +182,17 @@ class PublicTrackingGuestScreen extends StatelessWidget {
           child: Image.asset('assets/pts-logo.png'),
         ),
         actions: [
+          IconButton(
+            key: const ValueKey('guest_build_info_button'),
+            tooltip: AppBuildInfo.summary,
+            onPressed: () => showAboutDialog(
+              context: context,
+              applicationName: 'PTS Express',
+              applicationVersion:
+                  '${AppBuildInfo.appVersion}\n${AppBuildInfo.buildId}\n${AppBuildInfo.buildTime}',
+            ),
+            icon: const Icon(Icons.info_outline),
+          ),
           SegmentedButton<String>(
             key: const ValueKey('guest_language_toggle'),
             showSelectedIcon: false,

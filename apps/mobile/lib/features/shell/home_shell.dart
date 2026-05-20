@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/build/app_build_info.dart';
 import '../../core/i18n/app_strings.dart';
 import '../../core/models/parcel_models.dart';
 import '../admin/admin_screen.dart';
@@ -12,13 +13,17 @@ class HomeShell extends StatefulWidget {
     super.key,
     required this.session,
     required this.languageCode,
+    required this.themeMode,
     required this.onLanguageChanged,
+    required this.onThemeModeChanged,
     required this.onLogout,
   });
 
   final UserSession session;
   final String languageCode;
+  final ThemeMode themeMode;
   final ValueChanged<String> onLanguageChanged;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
   final VoidCallback onLogout;
 
   @override
@@ -27,8 +32,9 @@ class HomeShell extends StatefulWidget {
 
 class HomeShellState extends State<HomeShell> {
   int selectedIndex = 0;
+  late List<ShellDestination> _destinations = _buildDestinations();
 
-  List<ShellDestination> get destinations => [
+  List<ShellDestination> _buildDestinations() => [
     ShellDestination(
       icon: Icons.qr_code_scanner,
       label: t(widget.languageCode, 'สแกน', 'ສະແກນ'),
@@ -56,8 +62,17 @@ class HomeShellState extends State<HomeShell> {
   ];
 
   @override
+  void didUpdateWidget(covariant HomeShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.languageCode != widget.languageCode ||
+        oldWidget.session != widget.session) {
+      _destinations = _buildDestinations();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final items = destinations;
+    final items = _destinations;
     final selected = selectedIndex.clamp(0, items.length - 1);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -66,7 +81,9 @@ class HomeShellState extends State<HomeShell> {
           appBar: ShellAppBar(
             session: widget.session,
             languageCode: widget.languageCode,
+            themeMode: widget.themeMode,
             onLanguageChanged: widget.onLanguageChanged,
+            onThemeModeChanged: widget.onThemeModeChanged,
             onLogout: widget.onLogout,
           ),
           body: Row(
@@ -85,7 +102,12 @@ class HomeShellState extends State<HomeShell> {
                       ),
                   ],
                 ),
-              Expanded(child: items[selected].screen),
+              Expanded(
+                child: IndexedStack(
+                  index: selected,
+                  children: [for (final item in items) item.screen],
+                ),
+              ),
             ],
           ),
           bottomNavigationBar: useRail
@@ -125,13 +147,17 @@ class ShellAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.session,
     required this.languageCode,
+    required this.themeMode,
     required this.onLanguageChanged,
+    required this.onThemeModeChanged,
     required this.onLogout,
   });
 
   final UserSession session;
   final String languageCode;
+  final ThemeMode themeMode;
   final ValueChanged<String> onLanguageChanged;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
   final VoidCallback onLogout;
 
   @override
@@ -155,6 +181,34 @@ class ShellAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         if (!compact) ...[Text(session.displayName), const SizedBox(width: 8)],
+        IconButton(
+          key: const ValueKey('theme_toggle_button'),
+          tooltip: t(languageCode, 'เปลี่ยนธีม', 'ປ່ຽນຘີມ'),
+          onPressed: () {
+            final next = switch (themeMode) {
+              ThemeMode.system => ThemeMode.light,
+              ThemeMode.light => ThemeMode.dark,
+              ThemeMode.dark => ThemeMode.system,
+            };
+            onThemeModeChanged(next);
+          },
+          icon: Icon(switch (themeMode) {
+            ThemeMode.light => Icons.light_mode,
+            ThemeMode.dark => Icons.dark_mode,
+            ThemeMode.system => Icons.brightness_auto,
+          }),
+        ),
+        IconButton(
+          key: const ValueKey('build_info_button'),
+          tooltip: AppBuildInfo.summary,
+          onPressed: () => showAboutDialog(
+            context: context,
+            applicationName: 'PTS Express',
+            applicationVersion:
+                '${AppBuildInfo.appVersion}\n${AppBuildInfo.buildId}\n${AppBuildInfo.buildTime}',
+          ),
+          icon: const Icon(Icons.info_outline),
+        ),
         SegmentedButton<String>(
           key: const ValueKey('shell_language_toggle'),
           showSelectedIcon: false,

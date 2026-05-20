@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,6 +7,7 @@ import '../../core/i18n/app_strings.dart';
 import '../../core/models/parcel_models.dart';
 import '../../core/models/parcel_status.dart';
 import '../../core/repositories/parcel_repository.dart';
+import '../scan/widgets/scanner_sheet.dart';
 import 'state/parcel_list_cubit.dart';
 import 'state/parcel_list_state.dart';
 import 'widgets/parcel_detail_sheet.dart';
@@ -116,6 +118,19 @@ class ParcelSearchBar extends StatelessWidget {
   final VoidCallback onSearch;
   final ValueChanged<ParcelStatus?> onStatusChanged;
 
+  Future<void> _openScanner(BuildContext context) async {
+    final code = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const ScannerSheet(),
+    );
+    if (code != null && context.mounted) {
+      controller.text = code;
+      controller.selection = TextSelection.collapsed(offset: code.length);
+      onSearch();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -141,6 +156,13 @@ class ParcelSearchBar extends StatelessWidget {
               ),
             ),
           ),
+          if (!kIsWeb)
+            IconButton.filled(
+              key: const ValueKey('parcel_barcode_scan_button'),
+              tooltip: t(languageCode, 'สแกน Barcode', 'ສະແກນ Barcode'),
+              onPressed: () => _openScanner(context),
+              icon: const Icon(Icons.qr_code_scanner),
+            ),
           DropdownMenu<ParcelStatus?>(
             key: const ValueKey('parcel_status_filter'),
             initialSelection: selectedStatus,

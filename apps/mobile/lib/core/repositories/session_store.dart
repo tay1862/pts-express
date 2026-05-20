@@ -10,6 +10,7 @@ class SessionStore {
   static const _displayNameKey = 'pts_display_name';
   static const _roleKey = 'pts_role';
   static const _languageKey = 'pts_language';
+  static const _themeModeKey = 'pts_theme_mode';
 
   String? _token;
   String? _userId;
@@ -17,6 +18,7 @@ class SessionStore {
   String? _displayName;
   String? _role;
   String? _languageCode;
+  String? _themeMode;
 
   Future<void> saveSession(UserSession session) async {
     _token = session.accessToken;
@@ -101,5 +103,13 @@ class SessionStore {
   Future<void> saveLanguageCode(String value) {
     _languageCode = value;
     return _storage.write(key: _languageKey, value: value);
+  }
+
+  Future<String> themeMode() async =>
+      _themeMode ??= await _storage.read(key: _themeModeKey) ?? 'system';
+
+  Future<void> saveThemeMode(String value) {
+    _themeMode = value;
+    return _storage.write(key: _themeModeKey, value: value);
   }
 }

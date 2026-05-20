@@ -1,4 +1,4 @@
-package com.example.pts_express_mobile
+package com.ptsexpress.app
 
 import io.flutter.embedding.android.FlutterActivity
 

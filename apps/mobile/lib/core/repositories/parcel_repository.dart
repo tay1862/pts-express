@@ -41,21 +41,33 @@ class ParcelRepository {
       for (final parcel in remote) {
         await _database.upsertLocalParcel(parcel);
       }
-      return remote;
+      final pending = await _pendingLocalParcels(query: query, status: status);
+      final remoteIds = remote.map((p) => p.trackingCode).toSet();
+      final uniquePending = pending
+          .where((p) => !remoteIds.contains(p.trackingCode))
+          .toList();
+      return [...uniquePending, ...remote];
     } on DioException {
-      final local = await _database.allLocalParcels();
-      final q = query?.toLowerCase();
-      return local.where((parcel) {
-        final matchesStatus = status == null || parcel.status == status;
-        final matchesQuery =
-            q == null ||
-            q.isEmpty ||
-            parcel.trackingCode.toLowerCase().contains(q) ||
-            parcel.customerName.toLowerCase().contains(q) ||
-            (parcel.customerPhone?.toLowerCase().contains(q) ?? false);
-        return matchesStatus && matchesQuery;
-      }).toList();
+      return _pendingLocalParcels(query: query, status: status);
     }
+  }
+
+  Future<List<ParcelSummary>> _pendingLocalParcels({
+    String? query,
+    ParcelStatus? status,
+  }) async {
+    final local = await _database.allLocalParcels();
+    final q = query?.toLowerCase();
+    return local.where((parcel) {
+      final matchesStatus = status == null || parcel.status == status;
+      final matchesQuery =
+          q == null ||
+          q.isEmpty ||
+          parcel.trackingCode.toLowerCase().contains(q) ||
+          parcel.customerName.toLowerCase().contains(q) ||
+          (parcel.customerPhone?.toLowerCase().contains(q) ?? false);
+      return matchesStatus && matchesQuery;
+    }).toList();
   }
 
   Future<ParcelWriteResult> receive({

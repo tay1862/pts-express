@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/i18n/app_strings.dart';
+import '../scan/widgets/scanner_sheet.dart';
 import 'state/public_tracking_cubit.dart';
 import 'state/public_tracking_state.dart';
 
@@ -64,6 +66,29 @@ class PublicTrackingWorkspaceState extends State<PublicTrackingWorkspace> {
                 ),
               ),
             ),
+            if (!kIsWeb) ...[
+              const SizedBox(width: 8),
+              IconButton.filled(
+                key: const ValueKey('public_tracking_scan_button'),
+                tooltip: t(
+                  widget.languageCode,
+                  'สแกน Barcode',
+                  'ສະແກນ Barcode',
+                ),
+                onPressed: () async {
+                  final code = await showModalBottomSheet<String>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) => const ScannerSheet(),
+                  );
+                  if (code != null && context.mounted) {
+                    trackingController.text = code;
+                    context.read<PublicTrackingCubit>().track(code);
+                  }
+                },
+                icon: const Icon(Icons.qr_code_scanner),
+              ),
+            ],
             const SizedBox(width: 8),
             IconButton.filled(
               key: const ValueKey('public_tracking_button'),

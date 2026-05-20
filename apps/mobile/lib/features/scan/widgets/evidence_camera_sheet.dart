@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:isolate';
 import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 
 import '../../../core/i18n/app_strings.dart';
@@ -77,7 +79,7 @@ class EvidenceCameraSheetState extends State<EvidenceCameraSheet>
       );
       final nextController = CameraController(
         backCamera,
-        ResolutionPreset.high,
+        ResolutionPreset.medium,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
@@ -176,14 +178,27 @@ class EvidenceCameraSheetState extends State<EvidenceCameraSheet>
         imageBytes: bytes,
         lines: watermarkLines(capturedAt),
       );
+      if (watermarked.length > maxEvidenceAttachmentBytes) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          errorText = t(
+            widget.languageCode,
+            'รูปมีขนาดใหญ่เกินไป กรุณาถ่ายใหม่',
+            'ຮູບໃຫຍ່ເກີນໄປ ກະລຸນາຖ່າຍໃໝ່',
+          );
+        });
+        return;
+      }
       if (!mounted) {
         return;
       }
       Navigator.of(context).pop(
         EvidenceAttachment(
           type: EvidenceAttachmentType.photo,
-          fileName: 'pts-photo-${capturedAt.millisecondsSinceEpoch}.png',
-          contentType: 'image/png',
+          fileName: 'pts-photo-${capturedAt.millisecondsSinceEpoch}.jpg',
+          contentType: 'image/jpeg',
           bytes: watermarked,
           capturedAt: capturedAt,
           note: statusForMode(widget.mode).label(widget.languageCode),
@@ -294,7 +309,10 @@ class EvidenceWatermarker {
     required Uint8List imageBytes,
     required List<String> lines,
   }) async {
-    final codec = await ui.instantiateImageCodec(imageBytes, targetWidth: 1600);
+    final codec = await ui.instantiateImageCodec(
+      imageBytes,
+      targetWidth: maxEvidencePhotoDimension,
+    );
     final frame = await codec.getNextFrame();
     final image = frame.image;
     final recorder = ui.PictureRecorder();
@@ -338,8 +356,35 @@ class EvidenceWatermarker {
       image.width,
       image.height,
     );
-    final data = await watermarked.toByteData(format: ui.ImageByteFormat.png);
-    return data!.buffer.asUint8List();
+    final data = await watermarked.toByteData(
+      format: ui.ImageByteFormat.rawRgba,
+    );
+    final rgba = data!.buffer.asUint8List();
+    final encoded = await _encodeJpegInIsolate(
+      rgba: rgba,
+      width: image.width,
+      height: image.height,
+    );
+    return encoded;
+  }
+
+  static Future<Uint8List> _encodeJpegInIsolate({
+    required Uint8List rgba,
+    required int width,
+    required int height,
+  }) {
+    return Isolate.run(() {
+      final encoded = img.encodeJpg(
+        img.Image.fromBytes(
+          width: width,
+          height: height,
+          bytes: rgba.buffer,
+          order: img.ChannelOrder.rgba,
+        ),
+        quality: evidencePhotoJpegQuality,
+      );
+      return Uint8List.fromList(encoded);
+    });
   }
 }
 
