@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+const maxEvidenceAttachmentBytes = 2 * 1024 * 1024;
+const maxEvidencePhotoDimension = 1600;
+const evidencePhotoJpegQuality = 82;
+
 enum EvidenceAttachmentType {
   photo('PHOTO'),
   signature('SIGNATURE');
@@ -34,6 +38,8 @@ class EvidenceAttachment {
   final double? longitude;
   final double? accuracyMeters;
   final String? addressText;
+
+  bool get exceedsUploadLimit => bytes.length > maxEvidenceAttachmentBytes;
 
   Map<String, dynamic> toJson() => {
     'type': type.apiValue,

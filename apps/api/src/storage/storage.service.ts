@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  PayloadTooLargeException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -23,6 +27,7 @@ export interface Base64AttachmentUpload {
 
 @Injectable()
 export class StorageService {
+  private static readonly maxAttachmentBytes = 2 * 1024 * 1024;
   private readonly client: S3Client;
 
   constructor(private readonly config: ConfigService) {
@@ -62,6 +67,13 @@ export class StorageService {
     const key = this.objectKey(attachment.fileName);
     const publicBaseUrl = this.config.get<string>('R2_PUBLIC_BASE_URL');
     const bucket = this.config.get<string>('R2_BUCKET');
+    const body = Buffer.from(attachment.dataBase64, 'base64');
+
+    if (body.byteLength > StorageService.maxAttachmentBytes) {
+      throw new PayloadTooLargeException(
+        `Attachment exceeds ${StorageService.maxAttachmentBytes} bytes`,
+      );
+    }
 
     if (!publicBaseUrl || !bucket || !this.hasUsableR2Endpoint()) {
       this.assertR2Ready();
@@ -73,7 +85,7 @@ export class StorageService {
         Bucket: bucket,
         Key: key,
         ContentType: attachment.contentType,
-        Body: Buffer.from(attachment.dataBase64, 'base64'),
+        Body: body,
       }),
     );
     return {

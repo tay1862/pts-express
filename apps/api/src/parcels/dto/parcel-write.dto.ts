@@ -1,9 +1,11 @@
 import { ParcelCodeKind, ParcelPhotoType, ParcelStatus } from '@prisma/client';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBase64,
   IsDateString,
   IsEnum,
+  MaxLength,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -11,6 +13,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
+const MAX_ATTACHMENT_BASE64_LENGTH = Math.ceil((MAX_ATTACHMENT_BYTES * 4) / 3);
 
 export class RawParcelCodeDto {
   @IsString()
@@ -38,6 +43,7 @@ export class ParcelAttachmentDto {
   contentType!: string;
 
   @IsBase64()
+  @MaxLength(MAX_ATTACHMENT_BASE64_LENGTH)
   dataBase64!: string;
 
   @IsOptional()
@@ -94,6 +100,7 @@ export class ReceiveParcelDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(5)
   @ValidateNested({ each: true })
   @Type(() => ParcelAttachmentDto)
   attachments?: ParcelAttachmentDto[];
@@ -134,6 +141,7 @@ export class AdvanceParcelDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(5)
   @ValidateNested({ each: true })
   @Type(() => ParcelAttachmentDto)
   attachments?: ParcelAttachmentDto[];

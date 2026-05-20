@@ -105,6 +105,19 @@ class ScanCubit extends Cubit<ScanState> {
       );
       return;
     }
+    if (attachments.any((attachment) => attachment.exceedsUploadLimit)) {
+      emit(
+        state.copyWith(
+          submissionStatus: ScanSubmissionStatus.error,
+          message: t(
+            _languageCode,
+            'รูปแนบมีขนาดใหญ่เกินไป',
+            'ໄຟລ໌ຮູບແນບໃຫຍ່ເກີນໄປ',
+          ),
+        ),
+      );
+      return;
+    }
     emit(
       state.copyWith(
         submissionStatus: ScanSubmissionStatus.loading,
@@ -150,6 +163,19 @@ class ScanCubit extends Cubit<ScanState> {
         state.copyWith(
           submissionStatus: ScanSubmissionStatus.error,
           message: t(_languageCode, 'ต้องมีเลขพัสดุ', 'ຕ້ອງມີເລກພັດສະດຸ'),
+        ),
+      );
+      return;
+    }
+    if (attachments.any((attachment) => attachment.exceedsUploadLimit)) {
+      emit(
+        state.copyWith(
+          submissionStatus: ScanSubmissionStatus.error,
+          message: t(
+            _languageCode,
+            'รูปแนบมีขนาดใหญ่เกินไป',
+            'ໄຟລ໌ຮູບແນບໃຫຍ່ເກີນໄປ',
+          ),
         ),
       );
       return;

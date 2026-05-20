@@ -52,6 +52,7 @@ dependencies:
   geocoding: ^4.0.0
   signature: ^6.3.0
   connectivity_plus: ^7.1.1
+  image: ^4.5.4
 
 dev_dependencies:
   flutter_test:
