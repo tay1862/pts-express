@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/api/api_client.dart';
@@ -18,13 +19,25 @@ class AdminCubit extends Cubit<AdminState> {
     try {
       emit(state.copyWith(loading: false, users: await _apiClient.users()));
     } catch (error) {
+      final detail = _errorDetail(error);
       emit(
         state.copyWith(
           loading: false,
-          error: t(_languageCode, 'โหลดผู้ใช้ไม่ได้', 'ໂຫຼດຜູ້ໃຊ້ບໍ່ໄດ້'),
+          error:
+              '${t(_languageCode, 'โหลดผู้ใช้ไม่ได้', 'ໂຫຼດຜູ້ໃຊ້ບໍ່ໄດ້')}${detail.isNotEmpty ? ' ($detail)' : ''}',
         ),
       );
     }
+  }
+
+  String _errorDetail(Object error) {
+    if (error is DioException) {
+      if (error.response != null) {
+        return '${error.response!.statusCode}';
+      }
+      return error.type.name;
+    }
+    return '';
   }
 
   Future<void> loadQueue() async {
