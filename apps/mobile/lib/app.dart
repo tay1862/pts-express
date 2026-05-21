@@ -65,19 +65,31 @@ class PtsAppState extends State<PtsApp> with WidgetsBindingObserver {
   }
 
   Future<void> loadSession() async {
-    final nextSession = await widget.sessionStore.session();
-    final nextLanguage = await widget.sessionStore.languageCode();
-    final nextTheme = await widget.sessionStore.themeMode();
-    if (!mounted) {
-      return;
+    try {
+      final nextSession = await widget.sessionStore.session();
+      final nextLanguage = await widget.sessionStore.languageCode();
+      final nextTheme = await widget.sessionStore.themeMode();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        session = nextSession;
+        languageCode = nextLanguage;
+        themeMode = _parseThemeMode(nextTheme);
+        loading = false;
+      });
+      widget.autoSync.setEnabled(nextSession != null);
+    } catch (e) {
+      debugPrint('Error loading session: $e');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        session = null;
+        loading = false;
+      });
+      widget.autoSync.setEnabled(false);
     }
-    setState(() {
-      session = nextSession;
-      languageCode = nextLanguage;
-      themeMode = _parseThemeMode(nextTheme);
-      loading = false;
-    });
-    widget.autoSync.setEnabled(nextSession != null);
   }
 
   static ThemeMode _parseThemeMode(String value) => switch (value) {

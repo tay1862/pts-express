@@ -26,13 +26,17 @@ class SessionStore {
     _username = session.username;
     _displayName = session.displayName;
     _role = session.role;
-    await Future.wait([
-      _storage.write(key: _tokenKey, value: session.accessToken),
-      _storage.write(key: _userIdKey, value: session.userId),
-      _storage.write(key: _usernameKey, value: session.username),
-      _storage.write(key: _displayNameKey, value: session.displayName),
-      _storage.write(key: _roleKey, value: session.role),
-    ]);
+    try {
+      await Future.wait([
+        _storage.write(key: _tokenKey, value: session.accessToken),
+        _storage.write(key: _userIdKey, value: session.userId),
+        _storage.write(key: _usernameKey, value: session.username),
+        _storage.write(key: _displayNameKey, value: session.displayName),
+        _storage.write(key: _roleKey, value: session.role),
+      ]);
+    } catch (_) {
+      // Fallback silently if storage write fails
+    }
   }
 
   Future<UserSession?> session() async {
@@ -41,18 +45,22 @@ class SessionStore {
     var username = _username;
     var displayName = _displayName;
     var role = _role;
-    if ([
-      token,
-      userId,
-      username,
-      displayName,
-      role,
-    ].any((value) => value == null)) {
-      token = await _storage.read(key: _tokenKey);
-      userId = await _storage.read(key: _userIdKey);
-      username = await _storage.read(key: _usernameKey);
-      displayName = await _storage.read(key: _displayNameKey);
-      role = await _storage.read(key: _roleKey);
+    try {
+      if ([
+        token,
+        userId,
+        username,
+        displayName,
+        role,
+      ].any((value) => value == null)) {
+        token = await _storage.read(key: _tokenKey);
+        userId = await _storage.read(key: _userIdKey);
+        username = await _storage.read(key: _usernameKey);
+        displayName = await _storage.read(key: _displayNameKey);
+        role = await _storage.read(key: _roleKey);
+      }
+    } catch (_) {
+      // Fallback to in-memory if storage read fails
     }
     if ([
       token,
@@ -78,7 +86,11 @@ class SessionStore {
   }
 
   Future<String?> token() async {
-    _token ??= await _storage.read(key: _tokenKey);
+    try {
+      _token ??= await _storage.read(key: _tokenKey);
+    } catch (_) {
+      // Fallback silently
+    }
     return _token;
   }
 
@@ -88,28 +100,52 @@ class SessionStore {
     _username = null;
     _displayName = null;
     _role = null;
-    await Future.wait([
-      _storage.delete(key: _tokenKey),
-      _storage.delete(key: _userIdKey),
-      _storage.delete(key: _usernameKey),
-      _storage.delete(key: _displayNameKey),
-      _storage.delete(key: _roleKey),
-    ]);
+    try {
+      await Future.wait([
+        _storage.delete(key: _tokenKey),
+        _storage.delete(key: _userIdKey),
+        _storage.delete(key: _usernameKey),
+        _storage.delete(key: _displayNameKey),
+        _storage.delete(key: _roleKey),
+      ]);
+    } catch (_) {
+      // Fallback silently
+    }
   }
 
-  Future<String> languageCode() async =>
+  Future<String> languageCode() async {
+    try {
       _languageCode ??= await _storage.read(key: _languageKey) ?? 'th';
-
-  Future<void> saveLanguageCode(String value) {
-    _languageCode = value;
-    return _storage.write(key: _languageKey, value: value);
+    } catch (_) {
+      _languageCode ??= 'th';
+    }
+    return _languageCode!;
   }
 
-  Future<String> themeMode() async =>
-      _themeMode ??= await _storage.read(key: _themeModeKey) ?? 'system';
+  Future<void> saveLanguageCode(String value) async {
+    _languageCode = value;
+    try {
+      await _storage.write(key: _languageKey, value: value);
+    } catch (_) {
+      // Fallback silently
+    }
+  }
 
-  Future<void> saveThemeMode(String value) {
+  Future<String> themeMode() async {
+    try {
+      _themeMode ??= await _storage.read(key: _themeModeKey) ?? 'system';
+    } catch (_) {
+      _themeMode ??= 'system';
+    }
+    return _themeMode!;
+  }
+
+  Future<void> saveThemeMode(String value) async {
     _themeMode = value;
-    return _storage.write(key: _themeModeKey, value: value);
+    try {
+      await _storage.write(key: _themeModeKey, value: value);
+    } catch (_) {
+      // Fallback silently
+    }
   }
 }
